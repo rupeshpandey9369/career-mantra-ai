@@ -322,125 +322,56 @@ function submitPractice(q) {{
 
 @app.route('/ai_chatbot')
 def ai_chatbot():
-    return '''
-<!DOCTYPE html>
-<html>
-<head>
-    <title> May I Help You - CareerMantra</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>body{font-family:'Segoe UI',sans-serif}</style>
-</head>
-<body class="bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 min-h-screen p-6">
-    <div class="max-w-2xl mx-auto">
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-5xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 bg-clip-text text-transparent mb-4">
-                🕵🏻  AI Trainer
-            </h1>
-            <p class="text-xl text-blue-200">DSA • HR  • Company Prep</p>
-        </div>
+    username = session.get('user', 'User')
+    return f'''<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><title>AI Chatbot - CareerMantra</title><style>*{{margin:0;padding:0;box-sizing:border-box}}body{{background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;font-family:"Segoe UI",system-ui,sans-serif;min-height:100vh;padding:0}}.wrapper{{max-width:900px;height:100vh;margin:0 auto;display:flex;flex-direction:column}}.header{{background:rgba(15,23,42,0.9);backdrop-filter:blur(10px);border-bottom:1px solid rgba(148,163,184,0.2);padding:1.5rem;text-align:center}}.header h1{{font-size:1.8rem;background:linear-gradient(45deg,#60a5fa,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:0.5rem}}.header p{{color:#94a3b8;font-size:0.9rem}}.chat-container{{flex:1;display:flex;flex-direction:column;overflow:hidden}}.messages{{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;gap:1rem}}.message{{display:flex;animation:slideIn 0.3s ease-out}}@keyframes slideIn{{from{{opacity:0;transform:translateY(10px)}}to{{opacity:1;transform:translateY(0)}}}}.message.bot{{justify-content:flex-start}}.message.user{{justify-content:flex-end}}.bubble{{max-width:70%;padding:1rem 1.2rem;border-radius:12px;word-wrap:break-word;line-height:1.5}}.bubble.bot{{background:linear-gradient(135deg,rgba(96,165,250,0.2),rgba(52,211,153,0.1));border:1px solid rgba(96,165,250,0.3);color:#e2e8f0}}.bubble.user{{background:linear-gradient(135deg,#3b82f6,#2563eb);color:white}}.typing{{display:flex;align-items:center;gap:0.5rem}}.dot{{width:8px;height:8px;background:#60a5fa;border-radius:50%;animation:bounce 1.4s infinite}}.dot:nth-child(1){{animation-delay:0s}}.dot:nth-child(2){{animation-delay:0.2s}}.dot:nth-child(3){{animation-delay:0.4s}}@keyframes bounce{{0%,80%,100%{{transform:translateY(0)}}40%{{transform:translateY(-10px)}}}}.input-area{{background:rgba(30,41,59,0.8);backdrop-filter:blur(10px);border-top:1px solid rgba(148,163,184,0.2);padding:1.5rem;display:flex;gap:1rem}}.input-area input{{flex:1;background:rgba(15,23,42,0.6);border:1px solid rgba(100,116,139,0.4);color:#e2e8f0;padding:1rem;border-radius:10px;font-size:0.95rem}}.input-area input:focus{{outline:none;border-color:#60a5fa;box-shadow:0 0 0 3px rgba(96,165,250,0.1)}}.btn{{padding:0.75rem 1.5rem;background:linear-gradient(135deg,#10b981,#059669);color:white;border:none;border-radius:10px;font-weight:600;cursor:pointer;transition:all 0.3s;text-transform:uppercase;font-size:0.85rem;letter-spacing:0.5px}}.btn:hover{{transform:translateY(-2px);box-shadow:0 4px 12px rgba(16,185,129,0.3)}}.back-btn{{display:inline-block;margin-top:1rem;padding:0.75rem 2rem;background:rgba(100,116,139,0.4);color:#94a3b8;text-decoration:none;border-radius:10px;transition:all 0.3s;border:1px solid rgba(148,163,184,0.3)}}.back-btn:hover{{background:rgba(100,116,139,0.6);color:#e2e8f0;border-color:rgba(148,163,184,0.5)}}.quick-help{{background:rgba(15,23,42,0.6);border:1px solid rgba(96,165,250,0.2);border-radius:10px;padding:1rem;margin-bottom:1rem;font-size:0.85rem;color:#94a3b8}}.quick-help strong{{color:#60a5fa}}.messages::-webkit-scrollbar{{width:8px}}.messages::-webkit-scrollbar-track{{background:transparent}}.messages::-webkit-scrollbar-thumb{{background:rgba(96,165,250,0.3);border-radius:4px}}.messages::-webkit-scrollbar-thumb:hover{{background:rgba(96,165,250,0.5)}}</style></head><body><div class="wrapper"><div class="header"><h1>🤖 AI Chatbot Coach</h1><p>Ask anything about DSA, HR, Interviews & Career Prep</p></div><div class="chat-container"><div class="messages" id="messages"><div class="message bot"><div class="bubble bot"><strong>👋 Hi {username}!</strong><br><br>I'm your AI Career Coach powered by Gemini 2.5. I can help you with:<br><br><strong style="color:#60a5fa">📚 DSA Topics:</strong> Arrays, Trees, Graphs, DP solutions<br><strong style="color:#10b981">🗣️ HR Questions:</strong> Tell me about yourself, conflict resolution<br><strong style="color:#fbbf24">🏢 Company Prep:</strong> Google, Amazon, Microsoft interview tips<br><strong style="color:#f87171">💼 Resume & Behavioral:</strong> STAR method, behavioral answers<br><br>Just type your question below! 👇</div></div></div><div class="input-area"><input type="text" id="messageInput" placeholder="Ask your question..." onkeypress="if(event.key==='Enter') sendMsg()"><button class="btn" onclick="sendMsg()">Send 🚀</button></div></div><div style="padding:1rem;text-align:center;border-top:1px solid rgba(148,163,184,0.2)"><a href="/student_dashboard" class="back-btn">← Back to Dashboard</a></div></div><script>
+var messagesDiv = document.getElementById('messages');
 
-        <!-- Chat Container -->
-        <div class="bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-6 h-[70vh] flex flex-col">
-            <!-- Messages -->
-            <div id="messages" class="flex-1 overflow-y-auto space-y-4 mb-4 pr-2 scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-transparent">
-                <div class="message bot">
-                    <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-2xl rounded-br-sm max-w-lg">
-                        <strong> HELLO SIR 🙏🏻:</strong><br>
-                        Hi ''' + session.get('user', 'Aditya') + '''! how can I help you today? <strong></strong>🙂 <br><br>
-                        <strong>What can I assist you</strong><br>
-                        • <span class="text-yellow-300">Master Your Interviews with AI Guidancet</span> <br>
-                        • <span class="text-green-300">HR answers</span> (Tell me about yourself)<br>
-                        • <span class="text-orange-300">Company prep</span> (Google, Amazon)<br>
-                        • <span class="text-pink-300">Resume + Behavioral</span>
-                    </div>
-                </div>
-            </div>
+function sendMsg() {{
+  var inp = document.getElementById('messageInput');
+  var txt = inp.value.trim();
+  if (!txt) return;
+  
+  var msgDiv = document.createElement('div');
+  msgDiv.className = 'message user';
+  msgDiv.innerHTML = '<div class="bubble user">' + txt + '</div>';
+  messagesDiv.appendChild(msgDiv);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  
+  inp.value = '';
+  
+  var typingDiv = document.createElement('div');
+  typingDiv.className = 'message bot';
+  typingDiv.innerHTML = '<div class="bubble bot"><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>';
+  messagesDiv.appendChild(typingDiv);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  
+  fetch('/chat', {{
+    method: 'POST',
+    headers: {{'Content-Type': 'application/json'}},
+    body: JSON.stringify({{message: txt}})
+  }})
+  .then(r => r.json())
+  .then(d => {{
+    messagesDiv.removeChild(typingDiv);
+    var respDiv = document.createElement('div');
+    respDiv.className = 'message bot';
+    var reply = (d.reply || 'Unable to respond').replace(/\n/g, '<br>');
+    respDiv.innerHTML = '<div class="bubble bot"><strong>🤖 AI Coach:</strong><br>' + reply + '</div>';
+    messagesDiv.appendChild(respDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }})
+  .catch(e => {{
+    messagesDiv.removeChild(typingDiv);
+    var errDiv = document.createElement('div');
+    errDiv.className = 'message bot';
+    errDiv.innerHTML = '<div class="bubble bot" style="background:linear-gradient(135deg,rgba(244,63,94,0.2),rgba(249,115,22,0.1));border-color:rgba(244,63,94,0.3)"><strong>❌ Error:</strong><br>Could not get response. Try again!</div>';
+    messagesDiv.appendChild(errDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }});
+}}
 
-
-            <!-- Input -->
-            <div class="flex gap-3 p-4 bg-black/20 rounded-2xl border border-white/30">
-                <input id="messageInput" type="text" placeholder="Apna doubt type karo... (DSA, HR, Google prep)" 
-                       class="flex-1 bg-white/90 text-gray-900 p-4 rounded-2xl text-lg outline-none focus:ring-4 focus:ring-blue-500/50 font-medium"
-                       onkeypress="if(event.key==='Enter') sendMessage()">
-                <button onclick="sendMessage()" 
-                        class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-200">
-                    Send 🚀
-                </button>
-            </div>
-        </div>
-
-        <a href="/student_dashboard" class="mt-8 inline-block bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-200">
-            ← Student Dashboard
-        </a>
-    </div>
-
-    <script>
-    async function sendMessage() {
-        const input = document.getElementById('messageInput');
-        const messages = document.getElementById('messages');
-        const userMsg = input.value.trim();
-        if (!userMsg) return;
-
-        // User message
-        messages.innerHTML += `
-            <div class="message user flex justify-end">
-                <div class="bg-gradient-to-r from-gray-500 to-gray-700 text-white p-4 rounded-2xl rounded-bl-sm max-w-lg">
-                    <strong>You:</strong> ${userMsg}
-                </div>
-            </div>`;
-        
-        input.value = '';
-        messages.scrollTop = messages.scrollHeight;
-
-        // Show typing indicator
-        const typingDiv = document.createElement('div');
-        typingDiv.className = 'message bot flex';
-        typingDiv.innerHTML = `
-            <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-2xl rounded-br-sm max-w-lg">
-                <div class="flex items-center space-x-2">
-                    <div class="w-3 h-3 bg-white rounded-full animate-bounce"></div>
-                    <div class="w-3 h-3 bg-white rounded-full animate-bounce" style="animation-delay:0.1s"></div>
-                    <div class="w-3 h-3 bg-white rounded-full animate-bounce" style="animation-delay:0.2s"></div>
-                    <span>Gemini 2.5 typing...</span>
-                </div>
-            </div>`;
-        messages.appendChild(typingDiv);
-        messages.scrollTop = messages.scrollHeight;
-
-        try {
-            const res = await fetch('/chat', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({message: userMsg})
-            });
-            const data = await res.json();
-            
-            // Remove typing indicator
-            messages.removeChild(typingDiv);
-            
-            // Add bot response
-            messages.innerHTML += `
-                <div class="message bot flex">
-                    <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-2xl rounded-br-sm max-w-lg">
-                        <strong>🤖 Gemini 2.5 Coach:</strong><br>${data.reply}
-                    </div>
-                </div>`;
-            messages.scrollTop = messages.scrollHeight;
-        } catch(e) {
-            messages.removeChild(typingDiv);
-            messages.innerHTML += `
-                <div class="message bot flex">
-                    <div class="bg-gradient-to-r from-orange-500 to-red-600 text-white p-6 rounded-2xl rounded-br-sm max-w-lg">
-                        ❌ AI busy hai. Try: "DSA doubt hai" ya "Google prep kaise karu?"
-                    </div>
-                </div>`;
-            messages.scrollTop = messages.scrollHeight;
-        }
-    }
-    </script>
-</body>
-</html>'''
+document.getElementById('messageInput').focus();
+</script></body></html>'''
 
 
 @app.route('/performance')
@@ -936,3 +867,5 @@ if __name__ == '__main__':
     print("👨‍💼 rupesh/rupesh123 → Interviewer Dashboard")
     print("👨‍💻 ANY OTHER → Student Dashboard")
     app.run(debug=True, host='0.0.0.0', port=5000)
+
+application = app
