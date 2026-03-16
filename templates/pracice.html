@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Practice - CareerMantra AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+    <div class="max-w-4xl mx-auto">
+        <a href="/" class="inline-block mb-8 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-lg">
+            ← Back to Dashboard
+        </a>
+        
+        <h1 class="text-4xl font-bold text-gray-800 mb-12 text-center">Practice Questions 🏆</h1>
+        
+        <!-- Level Buttons -->
+        <div class="grid md:grid-cols-5 gap-4 mb-12">
+            <button onclick="loadLevel(1)" class="level-btn p-6 rounded-xl font-bold text-xl bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">Level 1</button>
+            <button onclick="loadLevel(2)" class="level-btn p-6 rounded-xl font-bold text-xl bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">Level 2</button>
+            <button onclick="loadLevel(3)" class="level-btn p-6 rounded-xl font-bold text-xl bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">Level 3</button>
+            <button onclick="loadLevel(4)" class="level-btn p-6 rounded-xl font-bold text-xl bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">Level 4</button>
+            <button onclick="loadLevel(5)" class="level-btn p-6 rounded-xl font-bold text-xl bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">Level 5</button>
+            <button onclick="loadLevel(6)" class="level-btn p-6 rounded-xl font-bold text-xl bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">Level 6</button>
+            <button onclick="loadLevel(7)" class="level-btn p-6 rounded-xl font-bold text-xl bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">Level 7</button>
+            <button onclick="loadLevel(8)" class="level-btn p-6 rounded-xl font-bold text-xl bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">Level 8</button>
+            <button onclick="loadLevel(9)" class="level-btn p-6 rounded-xl font-bold text-xl bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">Level 9</button>
+            <button onclick="loadLevel(10)" class="level-btn p-6 rounded-xl font-bold text-xl bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">Level 10</button>
+            <button onclick="loadLevel(11)" class="level-btn p-6 rounded-xl font-bold text-xl bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">Level 11</button>
+            <button onclick="loadLevel(12)" class="level-btn p-6 rounded-xl font-bold text-xl bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">Level 12</button>
+            <button onclick="loadLevel(13)" class="level-btn p-6 rounded-xl font-bold text-xl bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">Level 13</button>
+            <button onclick="loadLevel(14)" class="level-btn p-6 rounded-xl font-bold text-xl bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">Level 14</button>
+            <button onclick="loadLevel(15)" class="level-btn p-6 rounded-xl font-bold text-xl bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">Level 15</button>
+        </div>
+
+        <!-- Questions Area -->
+        <div id="questions-container" class="bg-white rounded-2xl shadow-2xl p-8 hidden">
+            <div class="flex justify-between items-center mb-8">
+                <h2 id="current-level" class="text-3xl font-bold text-gray-800"></h2>
+                <div class="text-2xl font-bold text-gray-600">
+                    <span id="score">Score: 0</span> / 10
+                </div>
+            </div>
+            <div id="questions"></div>
+        </div>
+    </div>
+
+    <script>
+        let questions = [];
+        let currentQuestion = 0;
+        let userScore = 0;
+
+        async function loadLevel(level) {
+            // Disable all level buttons
+            document.querySelectorAll('.level-btn').forEach(btn => btn.disabled = true);
+            event.target.disabled = false;
+            
+            // Show questions container
+            document.getElementById('current-level').textContent = `Level ${level}`;
+            document.getElementById('questions-container').classList.remove('hidden');
+            document.getElementById('score').textContent = 'Score: 0';
+            
+            try {
+                // Fetch questions from your working API
+                const response = await fetch(`/api/questions/${level}`);
+                questions = await response.json();
+                currentQuestion = 0;
+                userScore = 0;
+                showQuestion();
+            } catch (error) {
+                document.getElementById('questions').innerHTML = `
+                    <div class="text-center p-16 text-red-600">
+                        <h2 class="text-3xl font-bold mb-4">❌ Questions Failed to Load</h2>
+                        <p class="text-xl mb-8">API Error - Check console (F12)</p>
+                        <button onclick="location.reload()" class="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold">Try Again</button>
+                    </div>
+                `;
+                console.error('API Error:', error);
+            }
+        }
+
+        function showQuestion() {
+            if (currentQuestion >= questions.length) {
+                showResults();
+                return;
+            }
+
+            const question = questions[currentQuestion];
+            const allAnswers = [...question.incorrect_answers, question.correct_answer].sort(() => Math.random() - 0.5);
+            
+            document.getElementById('questions').innerHTML = `
+                <div class="max-w-3xl mx-auto">
+                    <div class="bg-gray-50 p-8 rounded-2xl mb-8 border-l-8 border-blue-500">
+                        <h3 class="text-2xl font-semibold text-gray-800 mb-6">${question.question.replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&amp;/g, '&')}</h3>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            ${allAnswers.map((answer, index) => `
+                                <button onclick="checkAnswer('${question.correct_answer.replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&amp;/g, '&')}', '${answer.replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&amp;/g, '&')}', this)" 
+                                        class="p-6 bg-white border-2 rounded-xl hover:shadow-lg hover:border-blue-400 transition-all text-left h-20 flex items-center justify-start">
+                                    ${answer.replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&amp;/g, '&')}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="text-center text-gray-500 text-lg">
+                        Question ${currentQuestion + 1} of ${questions.length}
+                    </div>
+                </div>
+            `;
+        }
+
+        function checkAnswer(correctAnswer, selectedAnswer, clickedButton) {
+            // Disable all answer buttons
+            document.querySelectorAll('button[onclick*="checkAnswer"]').forEach(btn => btn.disabled = true);
+            
+            // Style clicked button
+            if (correctAnswer === selectedAnswer) {
+                clickedButton.classList.add('bg-green-500', 'text-white', 'border-green-400', 'shadow-xl');
+                clickedButton.innerHTML += ' ✅';
+                userScore++;
+            } else {
+                clickedButton.classList.add('bg-red-500', 'text-white', 'border-red-400');
+                clickedButton.innerHTML += ' ❌';
+                
+                // Highlight correct answer
+                document.querySelectorAll('button[onclick*="checkAnswer"]').forEach(btn => {
+                    if (btn.textContent.includes(correctAnswer)) {
+                        btn.classList.add('bg-green-500', 'text-white', 'border-green-400');
+                        btn.innerHTML += ' ✅';
+                    }
+                });
+            }
+            
+            document.getElementById('score').textContent = `Score: ${userScore}`;
+            
+            // Next question after 2 seconds
+            setTimeout(() => {
+                currentQuestion++;
+                showQuestion();
+            }, 2000);
+        }
+
+        function showResults() {
+            const percentage = Math.round((userScore / questions.length) * 100);
+            document.getElementById('questions').innerHTML = `
+                <div class="text-center p-20">
+                    <h2 class="text-6xl font-black text-green-600 mb-8">🏆 Complete!</h2>
+                    <div class="text-5xl font-black text-gray-800 mb-12">${userScore}/${questions.length}</div>
+                    <div class="text-3xl text-gray-600 mb-12">${percentage}%</div>
+                    <div class="space-x-4">
+                        <button onclick="location.reload()" class="px-12 py-4 bg-blue-600 text-white rounded-2xl text-xl font-bold hover:bg-blue-700 shadow-xl">Play Again</button>
+                        <a href="/" class="px-12 py-4 bg-gray-600 text-white rounded-2xl text-xl font-bold hover:bg-gray-700 shadow-xl">Dashboard</a>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

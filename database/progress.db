@@ -1,0 +1,170 @@
+-- ========================================
+-- CareerMantra AI - PROGRESS DATABASE
+-- 8 Tables | Daily Tracking | Streaks | Goals
+-- ========================================
+
+-- Create Database
+CREATE TABLE IF NOT EXISTS progress (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    date DATE NOT NULL,
+    practice_sessions INTEGER DEFAULT 0,
+    total_score INTEGER DEFAULT 0,
+    time_spent INTEGER DEFAULT 0,  -- minutes
+    levels_completed INTEGER DEFAULT 0,
+    streak_days INTEGER DEFAULT 0,
+    mock_interviews INTEGER DEFAULT 0,
+    goals_progress INTEGER DEFAULT 0,  -- percentage
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, date)
+);
+
+-- 🔥 DAILY_STREAKS (Streak Tracking)
+CREATE TABLE IF NOT EXISTS daily_streaks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    streak_count INTEGER DEFAULT 1,
+    last_practice_date DATE NOT NULL,
+    longest_streak INTEGER DEFAULT 0,
+    current_streak INTEGER DEFAULT 0,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id)
+);
+
+-- 🎯 DAILY_GOALS (Micro Goals)
+CREATE TABLE IF NOT EXISTS daily_goals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    date DATE NOT NULL,
+    target_sessions INTEGER DEFAULT 3,
+    target_time INTEGER DEFAULT 60,  -- minutes
+    target_accuracy FLOAT DEFAULT 80.0,
+    achieved_sessions INTEGER DEFAULT 0,
+    achieved_time INTEGER DEFAULT 0,
+    achieved_accuracy FLOAT DEFAULT 0.0,
+    is_completed BOOLEAN DEFAULT 0,
+    UNIQUE(user_id, date)
+);
+
+-- 📊 WEEKLY_PROGRESS (Weekly Summary)
+CREATE TABLE IF NOT EXISTS weekly_progress (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    week_start DATE NOT NULL,
+    total_sessions INTEGER DEFAULT 0,
+    avg_score FLOAT DEFAULT 0.0,
+    total_time_spent INTEGER DEFAULT 0,
+    levels_unlocked INTEGER DEFAULT 0,
+    UNIQUE(user_id, week_start)
+);
+
+-- 🏆 LEVEL_PROGRESS (Level-wise Mastery)
+CREATE TABLE IF NOT EXISTS level_progress (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    level_number INTEGER NOT NULL CHECK (level_number >= 1 AND level_number <= 15),
+    attempts INTEGER DEFAULT 0,
+    best_score INTEGER DEFAULT 0,
+    avg_score FLOAT DEFAULT 0.0,
+    total_time INTEGER DEFAULT 0,  -- minutes
+    last_attempted TIMESTAMP,
+    is_mastered BOOLEAN DEFAULT 0,  -- 90%+ consistently
+    UNIQUE(user_id, level_number)
+);
+
+-- 💎 ACHIEVEMENT_PROGRESS (Badge Tracking)
+CREATE TABLE IF NOT EXISTS achievement_progress (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    achievement_id INTEGER NOT NULL,
+    progress_current INTEGER DEFAULT 0,
+    progress_target INTEGER NOT NULL,
+    is_unlocked BOOLEAN DEFAULT 0,
+    unlocked_at TIMESTAMP,
+    UNIQUE(user_id, achievement_id)
+);
+
+-- 📈 LEADERBOARD_SNAPSHOTS (Weekly Rankings)
+CREATE TABLE IF NOT EXISTS leaderboard_snapshots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    week_number INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    rank_position INTEGER NOT NULL,
+    total_points INTEGER NOT NULL,
+    snapshot_date DATE NOT NULL,
+    UNIQUE(week_number, user_id)
+);
+
+-- 🔔 PROGRESS_NOTIFICATIONS (Motivational Nudges)
+CREATE TABLE IF NOT EXISTS progress_notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    type VARCHAR(30) NOT NULL,  -- streak_broken, goal_achieved, new_level
+    title VARCHAR(100) NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ========================================
+-- INDEXES (⚡ 10x Query Speed)
+-- ========================================
+CREATE INDEX IF NOT EXISTS idx_progress_user_date ON progress(user_id, date);
+CREATE INDEX IF NOT EXISTS idx_streaks_user ON daily_streaks(user_id);
+CREATE INDEX IF NOT EXISTS idx_goals_user_date ON daily_goals(user_id, date);
+CREATE INDEX IF NOT EXISTS idx_level_user_level ON level_progress(user_id, level_number);
+CREATE INDEX IF NOT EXISTS idx_leaderboard_week_user ON leaderboard_snapshots(week_number, user_id);
+
+-- ========================================
+-- SAMPLE DATA (Rupesh Pandey - Lucknow)
+-- ========================================
+
+-- User 1 = Pandey Rupesh
+INSERT OR IGNORE INTO progress (user_id, date, practice_sessions, total_score, time_spent, streak_days) VALUES 
+(1, '2026-03-09', 2, 18, 45, 1),
+(1, '2026-03-10', 3, 27, 67, 2),
+(1, '2026-03-11', 1, 9, 23, 3),
+(1, '2026-03-12', 4, 36, 89, 4),
+(1, '2026-03-13', 2, 19, 54, 5),
+(1, '2026-03-14', 3, 28, 72, 6),
+(1, '2026-03-15', 1, 10, 35, 7);
+
+INSERT OR IGNORE INTO daily_streaks (user_id, streak_count, last_practice_date, longest_streak, current_streak) VALUES 
+(1, 7, '2026-03-15', 12, 7);
+
+INSERT OR IGNORE INTO daily_goals (user_id, date, target_sessions, achieved_sessions) VALUES 
+(1, '2026-03-15', 3, 1);
+
+INSERT OR IGNORE INTO level_progress (user_id, level_number, attempts, best_score, avg_score) VALUES 
+(1, 1, 3, 10, 9.7),
+(1, 2, 4, 9, 8.5),
+(1, 3, 2, 8, 8.0),
+(1, 4, 1, 10, 10.0);
+
+-- ========================================
+-- VIEWS (Pre-built Queries)
+-- ========================================
+
+CREATE VIEW IF NOT EXISTS user_weekly_summary AS
+SELECT 
+    p.user_id,
+    strftime('%W', p.date) as week_number,
+    COUNT(*) as total_sessions,
+    AVG(p.total_score * 1.0 / 10) as avg_accuracy,
+    SUM(p.time_spent) as total_time,
+    MAX(p.streak_days) as max_streak
+FROM progress p 
+GROUP BY p.user_id, week_number;
+
+CREATE VIEW IF NOT EXISTS current_streaks AS
+SELECT 
+    u.user_id,
+    ds.current_streak,
+    CASE 
+        WHEN ds.current_streak >= 30 THEN '🔥 LEGEND'
+        WHEN ds.current_streak >= 15 THEN '🥇 ELITE' 
+        WHEN ds.current_streak >= 7 THEN '🥈 PRO'
+        WHEN ds.current_streak >= 3 THEN '🥉 GOOD'
+        ELSE '💪 KEEP GOING'
+    END as streak_status
+FROM daily_streaks ds;

@@ -1,0 +1,190 @@
+-- ========================================
+-- CareerMantra AI - PRODUCTION DATABASE
+-- 12 Tables | Full Analytics | User Progress
+-- ========================================
+
+-- Create Database
+CREATE DATABASE IF NOT EXISTS careermantra;
+USE careermantra;
+
+-- 👤 1. USERS (Main Profiles)
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    full_name VARCHAR(100),
+    phone VARCHAR(15),
+    location VARCHAR(100) DEFAULT 'Lucknow, UP',
+    profile_pic TEXT,
+    bio TEXT,
+    skills JSON,  -- ["Python", "React", "AWS"]
+    experience_years INTEGER DEFAULT 0,
+    target_salary INTEGER,
+    resume_url TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_login TIMESTAMP,
+    is_active BOOLEAN DEFAULT 1
+);
+
+-- 📚 2. PRACTICE_SESSIONS (Quiz Progress)
+CREATE TABLE practice_sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    level INTEGER NOT NULL CHECK (level >= 1 AND level <= 10),
+    score INTEGER NOT NULL CHECK (score >= 0 AND score <= 10),
+    time_spent INTEGER,  -- seconds
+    questions_correct INTEGER,
+    questions_total INTEGER DEFAULT 10,
+    completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 🎤 3. INTERVIEWS (Mock Interview Data)
+CREATE TABLE mock_interviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    role_type VARCHAR(20),  -- frontend/backend/fullstack
+    questions_answered INTEGER,
+    avg_response_time INTEGER,  -- seconds
+    total_score FLOAT,
+    feedback JSON,  -- AI analysis
+    completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 💬 4. CHAT_HISTORY (AI Chatbot Conversations)
+CREATE TABLE chat_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    message TEXT NOT NULL,
+    role VARCHAR(10) CHECK (role IN ('user', 'bot')), 
+    session_id VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 📊 5. ANALYTICS_DAILY (Daily Stats)
+CREATE TABLE analytics_daily (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    date DATE,
+    practice_sessions INTEGER DEFAULT 0,
+    avg_score FLOAT DEFAULT 0,
+    streak_days INTEGER DEFAULT 0,
+    total_time_spent INTEGER DEFAULT 0,  -- minutes
+    UNIQUE(user_id, date),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 🎯 6. GOALS (Career Goals Tracking)
+CREATE TABLE user_goals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    title VARCHAR(100) NOT NULL,
+    description TEXT,
+    target_date DATE,
+    status VARCHAR(20) DEFAULT 'pending',  -- pending/in-progress/completed
+    progress_percentage INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 🏆 7. ACHIEVEMENTS (Badges & Milestones)
+CREATE TABLE achievements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    title VARCHAR(50) NOT NULL,
+    description TEXT,
+    icon VARCHAR(10),  -- emoji
+    earned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 📈 8. LEADERBOARD (Global Rankings)
+CREATE TABLE leaderboard (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    total_score INTEGER,
+    rank_position INTEGER,
+    week_number INTEGER,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE(user_id, week_number)
+);
+
+-- 🔐 9. SESSIONS (User Login Sessions)
+CREATE TABLE user_sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    session_token VARCHAR(255) UNIQUE NOT NULL,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 📝 10. NOTES (User Notes & Flashcards)
+CREATE TABLE user_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    title VARCHAR(100),
+    content TEXT,
+    category VARCHAR(30),
+    is_pinned BOOLEAN DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 🚀 11. JOB_APPLICATIONS (Job Tracking)
+CREATE TABLE job_applications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    company_name VARCHAR(100),
+    job_title VARCHAR(100),
+    status VARCHAR(20) DEFAULT 'applied',  -- applied/interviewing/rejected/offered
+    applied_date DATE,
+    notes TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 📱 12. NOTIFICATIONS (Push Notifications)
+CREATE TABLE notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    title VARCHAR(100),
+    message TEXT,
+    type VARCHAR(20),  -- achievement/new_tip/streak
+    is_read BOOLEAN DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- ========================================
+-- INDEXES (Performance Optimization ⚡)
+-- ========================================
+
+CREATE INDEX idx_users_username ON users(username);
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_practice_user_date ON practice_sessions(user_id, completed_at);
+CREATE INDEX idx_chat_user_date ON chat_history(user_id, created_at);
+CREATE INDEX idx_analytics_user_date ON analytics_daily(user_id, date);
+CREATE INDEX idx_goals_user_status ON user_goals(user_id, status);
+
+-- ========================================
+-- SAMPLE DATA (Testing)
+-- ========================================
+
+INSERT INTO users (username, email, password_hash, full_name, skills) VALUES 
+('rupeshpandey', 'rupesh@example.com', 'hashed_password_123', 'Pandey Rupesh', '["Python", "React", "Flask", "Tailwind"]');
+
+INSERT INTO practice_sessions (user_id, level, score, time_spent) VALUES 
+(1, 1, 10, 450),
+(1, 2, 9, 520),
+(1, 3, 8, 600);
+
+INSERT INTO achievements (user_id, title, icon) VALUES 
+(1, '5 Day Streak', '🔥'),
+(1, 'Level 3 Master', '🥉');

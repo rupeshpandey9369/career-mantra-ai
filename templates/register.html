@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head><title>Register - CareerMantra</title></head>
+<body>
+    <form method="POST">
+        Username: <input name="username" required><br>
+        Email: <input name="email" type="email" required><br>
+        Full Name: <input name="full_name" required><br>
+        Password: <input name="password" type="password" required><br>
+        <button type="submit">Register</button>
+    </form>
+    <a href="{{ url_for('login') }}">Already have account? Login</a>
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Coach - CareerMantra AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { 
+            background: rgba(255,255,255,0.3); 
+            border-radius: 3px; 
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-emerald-500 to-teal-600 min-h-screen p-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Back Button -->
+        <a href="/" class="inline-flex items-center gap-2 mb-8 px-6 py-3 bg-white/20 backdrop-blur-xl text-white rounded-2xl font-bold hover:bg-white/30 border border-white/30 shadow-xl hover:shadow-2xl transition-all">
+            ← Back to Dashboard
+        </a>
+        
+        <!-- Header -->
+        <div class="text-center mb-16">
+            <h1 class="text-5xl font-black bg-gradient-to-r from-white to-emerald-100 bg-clip-text text-transparent drop-shadow-2xl mb-4">
+                🤖 AI Interview Coach
+            </h1>
+            <p class="text-white/90 text-xl max-w-2xl mx-auto">
+                Real-time interview preparation • Resume tips • DSA guidance • Mock interview practice
+            </p>
+        </div>
+        
+        <!-- Main Chat Container -->
+        <div class="bg-white/20 backdrop-blur-xl rounded-3xl border border-white/30 shadow-2xl overflow-hidden h-[70vh] flex flex-col">
+            <!-- Chat Header -->
+            <div class="p-6 border-b border-white/20 bg-gradient-to-r from-emerald-600/90 to-teal-600/90 backdrop-blur-sm">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 bg-white/30 rounded-2xl flex items-center justify-center shadow-lg">
+                            <span class="text-3xl">🤖</span>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-black text-white drop-shadow-lg">CareerMantra AI Coach</h2>
+                            <div class="flex items-center gap-2 text-white/80">
+                                <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                                <span class="text-sm font-semibold">Online • Typing...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 text-white/70">
+                        <button onclick="clearChat()" class="p-2 hover:bg-white/20 rounded-xl transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Messages Area -->
+            <div id="chat-messages" class="flex-1 p-6 space-y-4 overflow-y-auto scrollbar-thin pr-4">
+                <!-- Welcome Message -->
+                <div class="bg-emerald-500/20 backdrop-blur-sm p-6 rounded-3xl text-emerald-100 border border-emerald-500/30 max-w-2xl">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 bg-emerald-400/80 rounded-2xl flex items-center justify-center flex-shrink-0 mt-1">
+                            <span class="text-xl">🤖</span>
+                        </div>
+                        <div class="flex-1">
+                            <strong class="font-black text-lg block mb-2">AI Coach</strong>
+                            <p>Hi {{ session.username or 'developer' }}! 👋</p>
+                            <p class="mt-2 text-emerald-100/90">I'm your personal interview coach. Ask me about:</p>
+                            <ul class="mt-3 space-y-1 text-sm">
+                                >• DSA preparation strategy</li>
+                                >• System Design fundamentals</li>
+                                >• Behavioral interview tips</li>
+                                >• Resume optimization</li>
+                                >• Mock interview practice</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Input Area -->
+            <div class="p-6 border-t border-white/20 bg-white/10 backdrop-blur-sm">
+                <div class="flex items-end gap-3">
+                    <div class="flex-1 relative">
+                        <input 
+                            id="message-input" 
+                            type="text" 
+                            placeholder="Ask 'How do I prepare for FAANG interviews?' or 'Explain Sliding Window technique'... " 
+                            class="w-full p-5 pr-14 bg-white/20 border border-white/40 rounded-3xl text-white placeholder-white/70 
+                                   focus:outline-none focus:ring-4 focus:ring-emerald-400/40 focus:border-white/60 
+                                   transition-all text-lg resize-none h-16"
+                            autocomplete="off"
+                        >
+                        <div class="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 text-sm">
+                            ⌨️ Enter
+                        </div>
+                    </div>
+                    <button 
+                        onclick="sendMessage()" 
+                        class="w-16 h-16 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 
+                               text-white rounded-3xl flex items-center justify-center shadow-2xl hover:shadow-3xl 
+                               transition-all duration-300 hover:scale-110 flex-shrink-0 group"
+                    >
+                        <svg class="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="mt-3 text-center">
+                    <div class="inline-flex items-center gap-2 bg-white/10 px-4 py-2 rounded-2xl text-white/80 text-sm backdrop-blur-sm">
+                        💡 <strong>Pro Tip:</strong> Try "Mock interview question for React developer"
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isTyping = false;
+
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const messages = document.getElementById('chat-messages');
+            const userMsg = input.value.trim();
+            
+            if (!userMsg || isTyping) return;
+            
+            // Add user message (right side)
+            const userDiv = document.createElement('div');
+            userDiv.className = 'flex justify-end';
+            userDiv.innerHTML = `
+                <div class="bg-white/60 backdrop-blur-sm p-4 rounded-3xl text-gray-900 max-w-2xl shadow-lg border border-white/50">
+                    <p class="font-medium">${userMsg}</p>
+                </div>
+            `;
+            messages.appendChild(userDiv);
+            input.value = '';
+            messages.scrollTop = messages.scrollHeight;
+            
+            // Show typing indicator
+            isTyping = true;
+            showTypingIndicator();
+            
+            // AI Response
+            setTimeout(() => {
+                hideTypingIndicator();
+                const responses = {
+                    'faang': '🎯 <strong>FAANG Prep Strategy:</strong><br>1. LeetCode 300+ Medium/Hard<br>2. System Design (Grokking course)<br>3. Behavioral STAR method<br>4. Mock interviews weekly<br><br>Focus: NeetCode 150 + company-tagged questions',
+                    'dsa': '⚡ <strong>DSA Priority:</strong><br><strong>High:</strong> Arrays, Hashing, Two Pointers, Sliding Window<br><strong>Medium:</strong> Trees, Graphs, DP<br><strong>Low:</strong> Math, Geometry<br><br>Pattern: Learn → Practice → Mock',
+                    'resume': '📄 <strong>Resume Gold Rules:</strong><br>✅ 1 page max<br>✅ Quantify: "Reduced API time 60%"<br>✅ Action verbs: Built, Optimized, Designed<br>✅ Tailor for each company<br>✅ GitHub + live projects',
+                    'mock': '🎤 <strong>Mock Interview Flow:</strong><br>1. Think 30s → Verbalize approach<br>2. Code → Test edge cases<br>3. Optimize → Discuss trade-offs<br>4. Ask clarifying questions<br><br>Practice: Pramp, interviewing.io',
+                    'default': '💡 Great question! Want to dive deeper into <strong>DSA patterns</strong>, <strong>System Design</strong>, or <strong>Behavioral prep</strong>?<br><br>Quick wins: NeetCode150 + Grokking System Design'
+                };
+                
+                const lowerMsg = userMsg.toLowerCase();
+                let aiResponse = responses['default'];
+                
+                if (lowerMsg.includes('faang') || lowerMsg.includes('google')) aiResponse = responses['faang'];
+                else if (lowerMsg.includes('dsa') || lowerMsg.includes('leetcode')) aiResponse = responses['dsa'];
+                else if (lowerMsg.includes('resume') || lowerMsg.includes('cv')) aiResponse = responses['resume'];
+                else if (lowerMsg.includes('mock') || lowerMsg.includes('interview')) aiResponse = responses['mock'];
+                
+                const aiDiv = document.createElement('div');
+                aiDiv.className = 'flex items-start gap-3';
+                aiDiv.innerHTML = `
+                    <div class="w-10 h-10 bg-emerald-400/80 rounded-2xl flex items-center justify-center flex-shrink-0 mt-1">
+                        <span class="text-xl">🤖</span>
+                    </div>
+                    <div class="bg-emerald-500/20 backdrop-blur-sm p-6 rounded-3xl text-emerald-100 border border-emerald-500/30 max-w-2xl">
+                        <strong class="font-black text-lg block mb-3">AI Coach</strong>
+                        <div class="prose prose-emerald max-w-none">${aiResponse}</div>
+                    </div>
+                `;
+                messages.appendChild(aiDiv);
+                messages.scrollTop = messages.scrollHeight;
+                isTyping = false;
+            }, 1500);
+        }
+        
+        function showTypingIndicator() {
+            const messages = document.getElementById('chat-messages');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'flex items-start gap-3';
+            typingDiv.innerHTML = `
+                <div class="w-10 h-10 bg-emerald-400/80 rounded-2xl flex items-center justify-center flex-shrink-0 mt-1">
+                    <span class="text-xl">🤖</span>
+                </div>
+                <div class="bg-emerald-500/20 p-4 rounded-2xl border border-emerald-500/30 max-w-xs">
+                    <div class="flex items-center gap-2">
+                        <div class="flex space-x-1">
+                            <div class="w-2 h-2 bg-emerald-400 rounded-full animate-bounce"></div>
+                            <div class="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                            <div class="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                        </div>
+                        <span class="text-emerald-100 text-sm">AI Coach is typing...</span>
+                    </div>
+                </div>
+            `;
+            messages.appendChild(typingDiv);
+            messages.scrollTop = messages.scrollHeight;
+        }
+        
+        function hideTypingIndicator() {
+            const typing = document.getElementById('typing-indicator');
+            if (typing) typing.remove();
+        }
+        
+        function clearChat() {
+            if (confirm('Clear chat history?')) {
+                document.getElementById('chat-messages').innerHTML = `
+                    <div class="bg-emerald-500/20 p-6 rounded-3xl text-emerald-100 border border-emerald-500/30 max-w-2xl">
+                        <div class="flex items-start gap-3">
+                            <div class="w-10 h-10 bg-emerald-400/80 rounded-2xl flex items-center justify-center flex-shrink-0 mt-1">
+                                <span class="text-xl">🤖</span>
+                            </div>
+                            <div class="flex-1">
+                                <strong class="font-black text-lg block mb-2">AI Coach</strong>
+                                <p>Chat cleared! Ready for new questions? 🚀</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // Enter key support
+        document.getElementById('message-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>

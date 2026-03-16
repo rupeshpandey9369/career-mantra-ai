@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live Interviewer - CareerMantra AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-orange-500 to-red-600 min-h-screen p-8">
+    <div class="max-w-4xl mx-auto">
+        <a href="/" class="inline-flex items-center gap-2 mb-8 px-6 py-3 bg-white/90 backdrop-blur-xl text-orange-600 rounded-2xl font-bold hover:bg-white shadow-xl hover:shadow-2xl transition-all">
+            ← Back to Dashboard
+        </a>
+        
+        <h1 class="text-5xl font-black bg-gradient-to-r from-white to-orange-100 bg-clip-text text-transparent text-center mb-16 drop-shadow-2xl">👨‍🏫 Live Interviewer</h1>
+        
+        <div class="bg-white/20 backdrop-blur-xl rounded-3xl p-12 text-center border border-white/30 shadow-2xl hover:shadow-3xl transition-all">
+            <h2 class="text-3xl font-bold text-white mb-8">Create Mock Interview Room</h2>
+            
+            <!-- Interview Type Buttons -->
+            <div class="grid md:grid-cols-3 gap-6 mb-12">
+                <button onclick="startInterview('frontend')" class="interview-btn p-8 bg-white/30 hover:bg-white/50 rounded-2xl text-white font-bold text-xl border border-white/40 hover:shadow-2xl hover:scale-105 hover:border-white/70 transition-all duration-300 group">
+                    <div class="text-3xl mb-3">⚛️</div>
+                    <div class="text-2xl mb-2">Frontend</div>
+                    <div class="text-sm text-white/80">React, CSS, UI/UX</div>
+                </button>
+                
+                <button onclick="startInterview('backend')" class="interview-btn p-8 bg-white/30 hover:bg-white/50 rounded-2xl text-white font-bold text-xl border border-white/40 hover:shadow-2xl hover:scale-105 hover:border-white/70 transition-all duration-300 group">
+                    <div class="text-3xl mb-3">🔧</div>
+                    <div class="text-2xl mb-2">Backend</div>
+                    <div class="text-sm text-white/80">Node, APIs, DB</div>
+                </button>
+                
+                <button onclick="startInterview('system')" class="interview-btn p-8 bg-white/30 hover:bg-white/50 rounded-2xl text-white font-bold text-xl border border-white/40 hover:shadow-2xl hover:scale-105 hover:border-white/70 transition-all duration-300 group">
+                    <div class="text-3xl mb-3">🏗️</div>
+                    <div class="text-2xl mb-2">System Design</div>
+                    <div class="text-sm text-white/80">Architecture, Scale</div>
+                </button>
+            </div>
+            
+            <!-- Features -->
+            <div class="grid md:grid-cols-3 gap-8 text-white/90 text-lg mb-12">
+                <div class="flex flex-col items-center p-6 bg-white/10 rounded-2xl backdrop-blur-sm">
+                    <div class="text-4xl mb-4">🎥</div>
+                    <div class="font-bold text-xl mb-2">Record Answers</div>
+                    <div>30 sec video capture</div>
+                </div>
+                <div class="flex flex-col items-center p-6 bg-white/10 rounded-2xl backdrop-blur-sm">
+                    <div class="text-4xl mb-4">🤖</div>
+                    <div class="font-bold text-xl mb-2">AI Feedback</div>
+                    <div>Instant analysis</div>
+                </div>
+                <div class="flex flex-col items-center p-6 bg-white/10 rounded-2xl backdrop-blur-sm">
+                    <div class="text-4xl mb-4">📊</div>
+                    <div class="font-bold text-xl mb-2">Score Report</div>
+                    <div>Communication + Tech</div>
+                </div>
+            </div>
+            
+            <div class="text-white/80 text-xl p-8 bg-white/10 rounded-2xl border border-white/20">
+                <strong>Pro Tip:</strong> Practice answering out loud. AI analyzes clarity, confidence & technical accuracy!
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function startInterview(type) {
+            // Simulate loading
+            const btn = event.target.closest('.interview-btn');
+            btn.innerHTML = '<div class="text-xl">🚀 Starting...</div>';
+            btn.classList.add('bg-green-500/80', 'animate-pulse');
+            
+            setTimeout(() => {
+                // Redirect to interview room (Future: WebRTC + AI)
+                alert(`🎤 ${type.toUpperCase()} Interview Room Created!\n\n✅ 30-second timer started\n✅ Recording active\n✅ AI listening...\n\nComing Soon: Real-time AI Interviewer!`);
+                btn.innerHTML = `
+                    <div class="text-3xl mb-3">${type === 'frontend' ? '⚛️' : type === 'backend' ? '🔧' : '🏗️'}</div>
+                    <div class="text-2xl mb-2">${type.charAt(0).toUpperCase() + type.slice(1)}</div>
+                    <div class="text-sm text-white/80">Ready</div>
+                `;
+                btn.classList.remove('bg-green-500/80', 'animate-pulse');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
