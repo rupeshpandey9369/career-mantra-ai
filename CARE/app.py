@@ -634,6 +634,105 @@ def join_with_code():
 
       #/interview_room/<room_id> route ADD karo:
 
+@app.route('/interview_room/<room_id>')
+def interview_room(room_id):
+    if room_id not in live_rooms:
+        return '''
+<!DOCTYPE html>
+<html><body style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);color:white;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;font-family:system-ui">
+<div style="background:rgba(255,255,255,0.95);color:#1e3a8a;padding:4rem;border-radius:30px;text-align:center;max-width:600px;width:90%;box-shadow:0 25px 50px rgba(0,0,0,0.3)">
+<h1 style="color:#ef4444;font-size:3rem">❌ Invalid Interview Code!</h1>
+<p style="font-size:1.2rem">Room not found. Please check the code and try again.</p>
+<a href="/interviewer_dashboard" style="background:#10b981;color:white;padding:1.2rem 2.5rem;border-radius:15px;text-decoration:none;display:inline-block;margin-top:2rem;font-weight:bold">Back to Dashboard</a>
+</div></body></html>'''
+    
+    room = live_rooms[room_id]
+    participants = interview_sessions.get(room_id, [])
+    
+    return f'''
+<!DOCTYPE html>
+<html><head><title>Interviewer Room - {room_id}</title>
+<script src="https://cdn.tailwindcss.com"></script></head>
+<body class="bg-gradient-to-br from-slate-900 to-gray-900 min-h-screen p-8 text-white">
+<div class="max-w-6xl mx-auto">
+    <h1 class="text-5xl font-bold text-center mb-12 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">🎤 Interview Control: {room_id}</h1>
+    
+    <div class="grid lg:grid-cols-3 gap-8">
+        <!-- PARTICIPANTS -->
+        <div class="bg-white/10 backdrop-blur-xl rounded-3xl p-8">
+            <h2 class="text-3xl font-bold text-blue-300 mb-6">👥 Participants ({len(participants)})</h2>
+            <div id="participantsList" class="space-y-4">
+                {''.join([f'<div class="bg-green-600/20 p-4 rounded-xl"><strong>{p}</strong> - Connected</div>' for p in participants])}
+            </div>
+        </div>
+        
+        <!-- QUESTIONS -->
+        <div class="bg-white/10 backdrop-blur-xl rounded-3xl p-8">
+            <h2 class="text-3xl font-bold text-yellow-300 mb-6">❓ Send Question</h2>
+            <textarea id="questionInput" placeholder="Type your question here..." class="w-full h-32 bg-black/30 p-4 rounded-2xl text-white mb-4"></textarea>
+            <button onclick="sendQuestion()" class="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white py-4 px-8 rounded-2xl font-bold text-xl">📤 Send Question</button>
+        </div>
+        
+        <!-- CHAT & CONTROLS -->
+        <div class="bg-white/10 backdrop-blur-xl rounded-3xl p-8">
+            <h2 class="text-3xl font-bold text-emerald-300 mb-6">💬 Live Chat</h2>
+            <div id="chatMessages" class="h-64 overflow-y-auto bg-black/30 rounded-2xl p-6 mb-6"></div>
+            <div class="space-y-4">
+                <button onclick="nextStage()" class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-6 rounded-2xl font-bold">Next Stage →</button>
+                <a href="/scorecard/{room_id}" class="block text-center bg-gradient-to-r from-cyan-500 to-blue-500 text-white py-3 px-6 rounded-2xl font-bold text-decoration-none">📊 View Scorecard</a>
+                <a href="/end_room/{room_id}" class="block text-center bg-gradient-to-r from-red-500 to-pink-500 text-white py-3 px-6 rounded-2xl font-bold text-decoration-none">❌ End Interview</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let roomId = "{room_id}";
+
+// Load messages
+function loadMessages() {{
+    fetch(`/get_messages/{room_id}`).then(r=>r.json()).then(data => {{
+        const msgs = document.getElementById("chatMessages");
+        msgs.innerHTML = "";
+        data.messages.forEach(function(msg) {{
+            var div = document.createElement("div");
+            var roleClass = msg.role === "interviewer" ? "text-right bg-blue-600" : "bg-emerald-600";
+            div.innerHTML = '<div class="' + roleClass + ' p-4 rounded-2xl max-w-lg mx-2">' +
+                '<strong>' + msg.user + ':</strong> ' + msg.text +
+                '</div>';
+            msgs.appendChild(div);
+        }});
+        msgs.scrollTop = msgs.scrollHeight;
+    }});
+}}
+
+setInterval(loadMessages, 2000);
+
+function sendQuestion() {{
+    var input = document.getElementById("questionInput");
+    var msg = input.value.trim();
+    if(!msg) return;
+    
+    fetch(`/send_message/{room_id}`, {{
+        method: "POST",
+        headers: {{"Content-Type": "application/json"}},
+        body: JSON.stringify({{text: msg, role: "interviewer"}})
+    }});
+    input.value = "";
+    loadMessages();
+}}
+
+function nextStage() {{
+    fetch(`/next_stage/{room_id}`, {{method: "POST"}}).then(r=>r.json()).then(d=>{{
+        alert("✅ Moved to next stage!");
+        location.reload();
+    }});
+}}
+
+loadMessages();
+</script>
+</body></html>'''
+
 @app.route('/student_interview/<room_id>')
 def student_interview(room_id):
     return f'''
@@ -766,6 +865,15 @@ def send_message(room_id):
     return jsonify({'status': 'sent'})
 
 
+
+@app.route('/next_stage/<room_id>', methods=['POST'])
+def next_stage(room_id):
+    if room_id in live_rooms and session.get('role') == 'interviewer':
+        current_stage = live_rooms[room_id].get('stage', 0)
+        if current_stage < 4:  # Assuming 5 stages (0-4)
+            live_rooms[room_id]['stage'] = current_stage + 1
+            # Here you could add logic to send next question or update
+    return jsonify({'status': 'updated'})
 
 @app.route('/chat', methods=['POST'])
 def chat():
