@@ -1,6 +1,6 @@
 from flask import jsonify
 import google.generativeai as genai
-genai.configure(api_key="AIzaSyDAKor1ZNkcJ1ADhne__5eyvd435kTZVYQ")
+genai.configure(api_key="AIzaSyCx6WG4JSrarW4wHp5z56lGVp8gDX5DPCU")
 
 from flask import Flask, request, render_template_string, session, redirect
 import hashlib
