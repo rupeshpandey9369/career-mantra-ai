@@ -350,21 +350,30 @@ function sendMsg() {{
     headers: {{'Content-Type': 'application/json'}},
     body: JSON.stringify({{message: txt}})
   }})
-  .then(r => r.json())
+  .then(r => {{
+    if (!r.ok) throw new Error('Network response error: ' + r.status);
+    return r.json();
+  }})
   .then(d => {{
-    messagesDiv.removeChild(typingDiv);
+    if (typingDiv && typingDiv.parentNode) {{
+      messagesDiv.removeChild(typingDiv);
+    }}
     var respDiv = document.createElement('div');
     respDiv.className = 'message bot';
     var reply = (d.reply || 'Unable to respond').replace(/\n/g, '<br>');
     respDiv.innerHTML = '<div class="bubble bot"><strong>🤖 AI Coach:</strong><br>' + reply + '</div>';
     messagesDiv.appendChild(respDiv);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    console.log('Message sent successfully');
   }})
   .catch(e => {{
-    messagesDiv.removeChild(typingDiv);
+    console.error('Chat error:', e);
+    if (typingDiv && typingDiv.parentNode) {{
+      messagesDiv.removeChild(typingDiv);
+    }}
     var errDiv = document.createElement('div');
     errDiv.className = 'message bot';
-    errDiv.innerHTML = '<div class="bubble bot" style="background:linear-gradient(135deg,rgba(244,63,94,0.2),rgba(249,115,22,0.1));border-color:rgba(244,63,94,0.3)"><strong>❌ Error:</strong><br>Could not get response. Try again!</div>';
+    errDiv.innerHTML = '<div class="bubble bot" style="background:linear-gradient(135deg,rgba(244,63,94,0.2),rgba(249,115,22,0.1));border-color:rgba(244,63,94,0.3)"><strong>❌ Error:</strong><br>Network error or server issue. Make sure the server is running!</div>';
     messagesDiv.appendChild(errDiv);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
   }});
