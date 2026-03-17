@@ -879,19 +879,20 @@ def next_stage(room_id):
 def chat():
     data = request.get_json(silent=True) or {}
     question = (data.get('question') or '').strip()
-    user_answer = (data.get('user_answer') or data.get('message') or '').strip()
+    user_message = (data.get('user_answer') or data.get('message') or '').strip()
     username = session.get('user', 'Student')
 
-    if not user_answer:
-        return jsonify({'reply': 'Score: 0%\nFeedback: No answer received. Please write your answer in the text box.\nCorrect Answer: Write a clear complete sentence answer.\nTip: Provide one structured example and details.'})
-
-    if not question:
-        question = 'Interview question'
+    if not user_message:
+        return jsonify({'reply': 'Please type your question or message below!'})
 
     model = genai.GenerativeModel('gemini-2.5-flash')
-    prompt = f"""You are CareerMantra AI Interview Coach responding in English.
+    
+    # If there's a question, evaluate the answer. Otherwise, just respond to the chat message
+    if question and question != 'Interview question':
+        # Interview answer evaluation mode
+        prompt = f"""You are CareerMantra AI Interview Coach responding in English.
 Question: {question}
-User Answer: {user_answer}
+User Answer: {user_message}
 Evaluate correctness from 0-100% and provide:
 1) Score: XX%
 2) Feedback: Short analysis of right/wrong.
@@ -903,11 +904,27 @@ Feedback: ...
 Correct Answer: ...
 Tip: ...
 User: {username} (AI/ML student)."""
+    else:
+        # Free-form chat mode
+        prompt = f"""You are CareerMantra AI - an expert career coach helping students prepare for interviews at top companies (Google, Amazon, Microsoft, Apple, Meta, etc.).
+
+Help the user with:
+- DSA (Data Structures & Algorithms) concepts and solutions
+- HR and behavioral interview questions using STAR method
+- System design concepts
+- Resume and career advice
+- Interview tips and tricks
+- Technical interview preparation
+
+User message: {user_message}
+
+Respond helpfully, concisely, and in English. Be encouraging and practical."""
+
     try:
         response = model.generate_content(prompt)
         ai_response = response.text
         
-        # Track interview attempt
+        # Track interaction
         if username not in practice_progress:
             practice_progress[username] = {
                 'level': 1,
@@ -921,41 +938,20 @@ User: {username} (AI/ML student)."""
                 'interview_scores': [],
                 'ai_feedback_ratings': []
             }
-        
-        practice_progress[username]['interviews_attended'] = practice_progress[username].get('interviews_attended', 0) + 1
-        
-        # Extract score from response
-        try:
-            score_line = [l for l in ai_response.split('\n') if 'Score:' in l][0]
-            score_str = ''.join(filter(str.isdigit, score_line.split('%')[0]))
-            score_val = int(score_str) if score_str else 70
-            practice_progress[username]['ai_feedback_ratings'].append(score_val)
-        except:
-            pass
         
         return jsonify({'reply': ai_response})
     except Exception as e:
-        print('chat error', e)
-        if len(user_answer) < 10:
-            fallback_response = 'Score: 0%\nFeedback: Answer too short. Please write 2-3 complete sentences.\nCorrect Answer: Use STAR method and include situation, task, action, result.\nTip: Add a specific example from your experience.'
-        else:
-            fallback_response = 'Score: 65%\nFeedback: The answer is partially correct but misses structure and detail.\nCorrect Answer: [Provide full structured answer with intro, key points and conclusion].\nTip: Use examples and numbers to improve clarity.'
-        
-        # Track in fallback too
-        if username not in practice_progress:
-            practice_progress[username] = {
-                'level': 1,
-                'questions_solved': 0,
-                'interviews_attended': 0,
-                'ai_interviews': 0,
-                'daily_hours': 0,
-                'streak': 0,
-                'overall_score': 0,
-                'skills': {'DSA': 0, 'SystemDesign': 0, 'Behavioral': 0},
-                'interview_scores': [],
-                'ai_feedback_ratings': []
-            }
-        practice_progress[username]['interviews_attended'] = practice_progress[username].get('interviews_attended', 0) + 1
+        print('chat error', str(e))
+        fallback_response = """I'm having trouble connecting right now, but I'm here to help! 
+
+You can ask me about:
+- DSA topics and solutions
+- Interview questions and answers
+- System design
+- HR and behavioral prep
+- Career advice
+
+Try rephrasing your question! 💪"""
         
         return jsonify({'reply': fallback_response})
 
