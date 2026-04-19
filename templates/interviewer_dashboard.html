@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interviewer Dashboard — CareerMantra AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+    :root {
+      --glass-bg:    rgba(15, 20, 40, 0.65);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --accent-1:    #6366f1;
+      --accent-2:    #22d3ee;
+      --accent-grad: linear-gradient(135deg, #6366f1, #22d3ee);
+      --danger:      #f43f5e;
+      --warning:     #f59e0b;
+      --success:     #10b981;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: #060b18;
+      color: #e2e8f0;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Ambient background blobs — subtle, not distracting */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.12;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::before {
+      width: 600px; height: 600px;
+      background: var(--accent-1);
+      top: -200px; left: -100px;
+    }
+    body::after {
+      width: 500px; height: 500px;
+      background: var(--accent-2);
+      bottom: -150px; right: -100px;
+    }
+
+    .glass {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+    }
+
+    /* Topbar */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      height: 60px;
+      background: rgba(6, 11, 24, 0.85);
+      border-bottom: 1px solid var(--glass-border);
+      backdrop-filter: blur(20px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+    }
+
+    .logo-mark {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: var(--accent-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 6px var(--success);
+      animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+
+    /* Page layout */
+    .page-wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Stats row */
+    .stat-card {
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,0.15);
+    }
+    .stat-val {
+      font-size: 2.2rem;
+      font-weight: 700;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Room cards */
+    .room-card {
+      border-radius: 20px;
+      padding: 1.5rem;
+      transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+    }
+    .room-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(99, 102, 241, 0.4);
+      box-shadow: 0 12px 40px rgba(99, 102, 241, 0.1);
+    }
+
+    .stage-pill {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 99px;
+    }
+
+    /* Create room form */
+    .create-panel {
+      border-radius: 24px;
+      padding: 2rem;
+    }
+
+    input.cm-input, select.cm-select, textarea.cm-textarea {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      color: #e2e8f0;
+      padding: 0.75rem 1rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    input.cm-input:focus, select.cm-select:focus, textarea.cm-textarea:focus {
+      border-color: var(--accent-1);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+    input.cm-input::placeholder, textarea.cm-textarea::placeholder {
+      color: rgba(148, 163, 184, 0.5);
+    }
+    select.cm-select option { background: #0f172a; }
+
+    .btn-primary {
+      background: var(--accent-grad);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+    .btn-primary:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35);
+    }
+    .btn-primary:active { transform: scale(0.98); }
+
+    .btn-ghost {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--glass-border);
+      color: #94a3b8;
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-ghost:hover {
+      background: rgba(255,255,255,0.12);
+      color: #e2e8f0;
+    }
+
+    .btn-danger {
+      background: rgba(244, 63, 94, 0.15);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      color: #f43f5e;
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-danger:hover { background: rgba(244, 63, 94, 0.25); }
+
+    /* Room code badge */
+    .room-code-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.85rem;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #a5b4fc;
+      padding: 4px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .room-code-badge:hover { background: rgba(99, 102, 241, 0.25); }
+
+    /* Empty state */
+    .empty-state {
+      border-radius: 24px;
+      border: 1px dashed rgba(255,255,255,0.1);
+      padding: 5rem 2rem;
+      text-align: center;
+    }
+
+    /* Notification toast */
+    #toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 999;
+      min-width: 280px;
+      border-radius: 14px;
+      padding: 1rem 1.25rem;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+  </style>
+</head>
+<body>
+
+  <!-- ── TOPBAR ─────────────────────────────────────────────────────── -->
+  <nav class="topbar">
+    <div class="flex items-center gap-3">
+      <span class="logo-mark">CareerMantra AI</span>
+      <span class="text-xs text-slate-500 font-medium hidden sm:inline">/ Interviewer Panel</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2 text-xs text-slate-400">
+        <div class="status-dot"></div>
+        <span id="topbar-status">Connected</span>
+      </div>
+      <div class="flex items-center gap-2 text-sm">
+        <div class="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-300 text-xs font-bold">
+          {{ session.get('user', 'I')[0].upper() }}
+        </div>
+        <span class="text-slate-300 hidden sm:inline">{{ session.get('user', 'Interviewer') }}</span>
+      </div>
+      <a href="/logout" class="btn-ghost text-xs px-3 py-1.5">Logout</a>
+    </div>
+  </nav>
+
+  <!-- ── PAGE CONTENT ──────────────────────────────────────────────── -->
+  <div class="page-wrap">
+
+    <!-- Section header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-white tracking-tight">Interview Control Panel</h1>
+      <p class="text-slate-400 mt-1 text-sm">Manage active rooms, create sessions, and monitor candidates in real time.</p>
+    </div>
+
+    <!-- Stats row -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div class="stat-card glass">
+        <div class="text-xs text-slate-500 uppercase tracking-widest mb-2 font-medium">Active Rooms</div>
+        <div class="stat-val text-indigo-400">{{ live_rooms | length }}</div>
+      </div>
+      <div class="stat-card glass">
+        <div class="text-xs text-slate-500 uppercase tracking-widest mb-2 font-medium">Total Candidates</div>
+        <div class="stat-val text-cyan-400">{{ total_candidates }}</div>
+      </div>
+      <div class="stat-card glass">
+        <div class="text-xs text-slate-500 uppercase tracking-widest mb-2 font-medium">Completed Today</div>
+        <div class="stat-val text-emerald-400">{{ completed_today }}</div>
+      </div>
+      <div class="stat-card glass">
+        <div class="text-xs text-slate-500 uppercase tracking-widest mb-2 font-medium">Avg. Score</div>
+        <div class="stat-val text-amber-400">{{ avg_score or '—' }}</div>
+      </div>
+    </div>
+
+    <!-- Two-column layout: rooms list + create panel -->
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+      <!-- ── ACTIVE ROOMS (3/5 width) ───────────────────────────────── -->
+      <div class="lg:col-span-3">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-widest">Active Rooms</h2>
+          <span class="text-xs text-slate-500">{{ live_rooms | length }} room(s)</span>
+        </div>
+
+        {% if live_rooms %}
+          <div class="space-y-4" id="rooms-list">
+            {% for room_id, room in live_rooms.items() %}
+            {% set participants = interview_sessions.get(room_id, []) %}
+            {% set stage = room.get('stage', 0) %}
+            {% set stage_labels = ['Intro', 'Coding', 'System Design', 'Behavioral', 'Closing'] %}
+            {% set stage_colors = ['text-slate-400 bg-slate-400/10 border-slate-400/20',
+                                   'text-cyan-400 bg-cyan-400/10 border-cyan-400/20',
+                                   'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
+                                   'text-amber-400 bg-amber-400/10 border-amber-400/20',
+                                   'text-emerald-400 bg-emerald-400/10 border-emerald-400/20'] %}
+            <div class="room-card glass" data-room="{{ room_id }}">
+              <div class="flex items-start justify-between gap-4 mb-4">
+                <div class="flex items-center gap-3">
+                  <!-- Live indicator -->
+                  <div class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#10b981] mt-0.5 flex-shrink-0"></div>
+                  <div>
+                    <div class="font-semibold text-white">{{ room.get('candidate', 'Candidate') }}</div>
+                    <div class="text-xs text-slate-500 mt-0.5">{{ room.get('position', 'Position not set') }}</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                  <span class="stage-pill border {{ stage_colors[stage] }}">{{ stage_labels[stage] }}</span>
+                  <span class="room-code-badge" onclick="copyRoomCode('{{ room_id }}')" title="Click to copy">{{ room_id }}</span>
+                </div>
+              </div>
+
+              <!-- Stage progress bar -->
+              <div class="mb-4">
+                <div class="flex justify-between text-xs text-slate-500 mb-1.5">
+                  <span>Stage {{ stage + 1 }} / 5</span>
+                  <span>{{ participants | length }} participant(s)</span>
+                </div>
+                <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                  <div class="h-full bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-full transition-all duration-500"
+                       style="width: {{ ((stage + 1) / 5) * 100 }}%"></div>
+                </div>
+              </div>
+
+              <!-- Action buttons -->
+              <div class="flex items-center gap-2 flex-wrap">
+                <a href="/interview_room/{{ room_id }}"
+                   class="btn-primary text-sm px-4 py-2 flex items-center gap-2">
+                  <i class="fas fa-video text-xs"></i> Live Room
+                </a>
+                <a href="/scorecard/{{ room_id }}"
+                   class="btn-ghost text-sm px-4 py-2 flex items-center gap-2">
+                  <i class="fas fa-chart-bar text-xs"></i> Scorecard
+                </a>
+                <button onclick="openAICopilot('{{ room_id }}', '{{ room.get('candidate', '') }}')"
+                        class="btn-ghost text-sm px-4 py-2 flex items-center gap-2 text-indigo-400 border-indigo-500/20 hover:bg-indigo-500/10">
+                  <i class="fas fa-robot text-xs"></i> AI Co-Pilot
+                </button>
+                <a href="/end_room/{{ room_id }}"
+                   class="btn-danger text-sm px-4 py-2 flex items-center gap-2 ml-auto"
+                   onclick="return confirm('End this interview room?')">
+                  <i class="fas fa-stop text-xs"></i> End
+                </a>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+
+        {% else %}
+          <div class="empty-state">
+            <div class="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mx-auto mb-4">
+              <i class="fas fa-door-open text-2xl text-indigo-400"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-300 mb-2">No active rooms</h3>
+            <p class="text-sm text-slate-500">Create a room to get started. Your room code will appear here.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- ── CREATE ROOM PANEL (2/5 width) ───────────────────────────── -->
+      <div class="lg:col-span-2">
+        <div class="sticky top-20">
+          <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-widest mb-4">New Interview Room</h2>
+          <div class="create-panel glass">
+            <form method="POST" action="/create_interview" id="create-form">
+              <div class="space-y-4">
+
+                <div>
+                  <label class="block text-xs text-slate-400 mb-1.5 font-medium">Candidate Name</label>
+                  <input name="candidate_name" class="cm-input" placeholder="e.g. Priya Sharma" required>
+                </div>
+
+                <div>
+                  <label class="block text-xs text-slate-400 mb-1.5 font-medium">Position / Role</label>
+                  <input name="position" class="cm-input" placeholder="e.g. SDE-2, ML Engineer">
+                </div>
+
+                <div>
+                  <label class="block text-xs text-slate-400 mb-1.5 font-medium">Interview Type</label>
+                  <select name="room_type" class="cm-select">
+                    <option value="coding">Coding / DSA</option>
+                    <option value="system_design">System Design</option>
+                    <option value="behavioral">Behavioral / HR</option>
+                    <option value="mixed" selected>Mixed (All Rounds)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-xs text-slate-400 mb-1.5 font-medium">
+                    Job Description <span class="text-slate-600">(for AI Co-Pilot)</span>
+                  </label>
+                  <textarea name="job_description" class="cm-textarea" rows="4"
+                            placeholder="Paste the JD here. The AI co-pilot uses this to suggest tailored questions."></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs text-slate-400 mb-1.5 font-medium">Scheduled Time</label>
+                    <input type="datetime-local" name="scheduled_at" class="cm-input">
+                  </div>
+                  <div>
+                    <label class="block text-xs text-slate-400 mb-1.5 font-medium">Duration (mins)</label>
+                    <input type="number" name="duration_minutes" class="cm-input" value="60" min="15" max="180">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs text-slate-400 mb-1.5 font-medium">Passcode</label>
+                  <div class="flex gap-2">
+                    <input type="text" name="passcode" id="passcode-input" class="cm-input"
+                           placeholder="Auto-generated" readonly>
+                    <button type="button" onclick="generatePasscode()"
+                            class="btn-ghost text-xs px-3 py-2 flex-shrink-0">
+                      <i class="fas fa-refresh"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <button type="submit" class="btn-primary w-full py-3 text-sm flex items-center justify-center gap-2 mt-2">
+                  <i class="fas fa-plus text-xs"></i>
+                  Generate Room Code
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── AI CO-PILOT DRAWER ─────────────────────────────────────────── -->
+  <!--
+    Slides in from the right when the interviewer clicks "AI Co-Pilot"
+    on any room card. Communicates with the SocketIO server to pull
+    Gemini-generated question suggestions in real time.
+  -->
+  <div id="copilot-overlay"
+       class="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm hidden"
+       onclick="closeCopilot()">
+  </div>
+
+  <aside id="copilot-drawer"
+         class="fixed right-0 top-0 h-full w-full max-w-md z-50 transform translate-x-full transition-transform duration-300 ease-out"
+         style="background: #0a0f20; border-left: 1px solid rgba(255,255,255,0.08);">
+
+    <div class="flex flex-col h-full">
+      <!-- Drawer header -->
+      <div class="flex items-center justify-between px-5 py-4 border-b border-white/5">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
+            <i class="fas fa-robot text-indigo-400 text-sm"></i>
+          </div>
+          <div>
+            <div class="font-semibold text-white text-sm">AI Co-Pilot</div>
+            <div class="text-xs text-slate-500" id="copilot-room-label">No room selected</div>
+          </div>
+        </div>
+        <button onclick="closeCopilot()" class="btn-ghost w-8 h-8 flex items-center justify-center text-xs">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Stage selector -->
+      <div class="px-5 py-3 border-b border-white/5">
+        <div class="text-xs text-slate-400 mb-2 font-medium">Current Stage</div>
+        <div class="flex gap-2 flex-wrap">
+          {% for s in ['Intro', 'Coding', 'System', 'Behavioral', 'Closing'] %}
+          <button onclick="setStage({{ loop.index0 }})"
+                  class="stage-btn text-xs px-3 py-1.5 rounded-lg border border-white/10 text-slate-400
+                         hover:border-indigo-500/40 hover:text-indigo-300 transition-all"
+                  data-stage="{{ loop.index0 }}">
+            {{ s }}
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Suggestions area -->
+      <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4" id="suggestions-container">
+        <div class="text-center py-12 text-slate-600" id="suggestions-placeholder">
+          <i class="fas fa-lightbulb text-3xl mb-3 block opacity-40"></i>
+          <p class="text-sm">Click "Get Suggestions" to pull AI-tailored questions for this candidate and stage.</p>
+        </div>
+      </div>
+
+      <!-- Drawer footer -->
+      <div class="px-5 py-4 border-t border-white/5 space-y-2">
+        <div class="text-xs text-slate-500 mb-2">Questions asked this session:</div>
+        <div id="asked-questions-tags" class="flex flex-wrap gap-1.5 min-h-6"></div>
+        <button onclick="fetchSuggestions()"
+                id="fetch-btn"
+                class="btn-primary w-full py-3 text-sm flex items-center justify-center gap-2 mt-3">
+          <i class="fas fa-wand-magic-sparkles text-xs"></i>
+          Get Suggestions
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── TOAST ────────────────────────────────────────────────────── -->
+  <div id="toast" class="glass">
+    <div class="flex items-center gap-3">
+      <i id="toast-icon" class="fas fa-info-circle text-indigo-400"></i>
+      <span id="toast-msg" class="text-sm text-slate-200"></span>
+    </div>
+  </div>
+
+  <script>
+    // ── SocketIO init ──────────────────────────────────────────────
+    // Connect to the SocketIO server (separate host in production).
+    // The SOCKET_URL is injected by Flask; falls back to same host for dev.
+    const SOCKET_URL = "{{ config.get('SOCKETIO_SERVER_URL', '') }}";
+    const socket = SOCKET_URL ? io(SOCKET_URL) : io();
+
+    socket.on("connect", () => updateTopbarStatus(true));
+    socket.on("disconnect", () => updateTopbarStatus(false));
+
+    socket.on("participant_joined", (data) => {
+      toast(`${data.user} joined as ${data.role}`, "success");
+    });
+
+    socket.on("proctor_alert", (data) => {
+      const label = data.type === "tab_switch" ? "switched tabs" : "exited fullscreen";
+      toast(`⚠ ${data.candidate} ${label} (${data.tab_switches + data.fullscreen_exits} total)`, "warning");
+    });
+
+    socket.on("ai_suggestions", (data) => renderSuggestions(data));
+    socket.on("ai_suggestions_error", (data) => {
+      toast(data.msg || "AI error. Try again.", "error");
+      resetFetchBtn();
+    });
+
+    // ── Co-Pilot state ─────────────────────────────────────────────
+    let activeRoom     = null;
+    let activeStage    = 0;
+    let askedQuestions = [];
+
+    function openAICopilot(roomCode, candidateName) {
+      activeRoom = roomCode;
+      document.getElementById("copilot-room-label").textContent =
+        `Room ${roomCode} · ${candidateName || "Candidate"}`;
+
+      document.getElementById("copilot-overlay").classList.remove("hidden");
+      document.getElementById("copilot-drawer").classList.remove("translate-x-full");
+    }
+
+    function closeCopilot() {
+      document.getElementById("copilot-overlay").classList.add("hidden");
+      document.getElementById("copilot-drawer").classList.add("translate-x-full");
+    }
+
+    function setStage(idx) {
+      activeStage = idx;
+      document.querySelectorAll(".stage-btn").forEach((b, i) => {
+        b.classList.toggle("border-indigo-500/60",  i === idx);
+        b.classList.toggle("text-indigo-300",        i === idx);
+        b.classList.toggle("border-white/10",        i !== idx);
+        b.classList.toggle("text-slate-400",         i !== idx);
+      });
+      if (activeRoom) {
+        socket.emit("set_stage", { room_code: activeRoom, stage: idx });
+      }
+    }
+
+    function fetchSuggestions() {
+      if (!activeRoom) { toast("Open a room first.", "error"); return; }
+
+      const btn = document.getElementById("fetch-btn");
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin text-xs"></i> Thinking...';
+
+      document.getElementById("suggestions-placeholder").classList.add("hidden");
+
+      socket.emit("request_ai_suggestions", {
+        room_code:        activeRoom,
+        asked_questions:  askedQuestions,
+        stage:            activeStage,
+      });
+    }
+
+    function resetFetchBtn() {
+      const btn = document.getElementById("fetch-btn");
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-wand-magic-sparkles text-xs"></i> Get Suggestions';
+    }
+
+    function renderSuggestions(data) {
+      resetFetchBtn();
+
+      const container = document.getElementById("suggestions-container");
+      // Clear old suggestions but keep placeholder node (just hidden).
+      container.querySelectorAll(".suggestion-card").forEach(el => el.remove());
+
+      if (data.stage_tip) {
+        const tip = document.createElement("div");
+        tip.className = "text-xs text-cyan-400/80 bg-cyan-500/10 border border-cyan-500/20 rounded-xl px-4 py-3";
+        tip.innerHTML = `<i class="fas fa-lightbulb mr-1.5"></i>${escHtml(data.stage_tip)}`;
+        container.prepend(tip);
+      }
+
+      (data.questions || []).forEach((q, i) => {
+        const card = document.createElement("div");
+        card.className = "suggestion-card rounded-2xl p-4 border border-white/6 bg-white/3 hover:border-indigo-500/30 transition-all";
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2 mb-3">
+            <div class="text-xs font-semibold text-indigo-300 uppercase tracking-widest">Q${i + 1}</div>
+            <button onclick="markAsked('${escHtml(q.q)}')"
+                    class="btn-ghost text-xs px-2 py-1 flex items-center gap-1 text-slate-500 hover:text-emerald-400">
+              <i class="fas fa-check text-xs"></i> Mark asked
+            </button>
+          </div>
+          <p class="text-sm text-slate-200 leading-relaxed mb-3">${escHtml(q.q)}</p>
+          ${q.why ? `<div class="text-xs text-slate-500 mb-2"><span class="text-slate-600">Why: </span>${escHtml(q.why)}</div>` : ""}
+          ${q.follow_up ? `
+            <div class="mt-3 pt-3 border-t border-white/5">
+              <div class="text-xs text-slate-600 mb-1">Follow-up</div>
+              <p class="text-xs text-slate-400 leading-relaxed">${escHtml(q.follow_up)}</p>
+            </div>
+          ` : ""}
+          <button onclick="pushQuestion(\`${escHtml(q.q)}\`)"
+                  class="mt-3 w-full btn-ghost text-xs py-2 flex items-center justify-center gap-1.5
+                         text-indigo-400 border-indigo-500/20 hover:bg-indigo-500/10">
+            <i class="fas fa-arrow-right text-xs"></i> Push to candidate
+          </button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function markAsked(question) {
+      if (!askedQuestions.includes(question)) {
+        askedQuestions.push(question);
+        const tag = document.createElement("span");
+        tag.className = "text-xs bg-white/5 border border-white/10 text-slate-400 px-2 py-0.5 rounded-lg";
+        tag.textContent = question.slice(0, 30) + (question.length > 30 ? "…" : "");
+        document.getElementById("asked-questions-tags").appendChild(tag);
+        toast("Marked as asked.", "success");
+      }
+    }
+
+    function pushQuestion(q) {
+      if (!activeRoom) return;
+      socket.emit("set_question", { room_code: activeRoom, question: q });
+      toast("Question pushed to candidate's screen.", "success");
+      markAsked(q);
+    }
+
+    // ── Room code copy ──────────────────────────────────────────────
+    function copyRoomCode(code) {
+      const shareUrl = `${window.location.origin}/join?code=${code}`;
+      navigator.clipboard.writeText(shareUrl).then(() => toast("Share link copied!", "success"));
+    }
+
+    // ── Passcode generator ─────────────────────────────────────────
+    function generatePasscode() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      const code = Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+      document.getElementById("passcode-input").value = code;
+    }
+    // Auto-generate on page load so the field isn't empty.
+    generatePasscode();
+
+    // ── Topbar status ──────────────────────────────────────────────
+    function updateTopbarStatus(connected) {
+      const el = document.getElementById("topbar-status");
+      el.textContent = connected ? "Connected" : "Reconnecting…";
+      el.style.color = connected ? "#10b981" : "#f59e0b";
+    }
+
+    // ── Toast ──────────────────────────────────────────────────────
+    let toastTimer = null;
+    function toast(msg, type = "info") {
+      const el   = document.getElementById("toast");
+      const icon = document.getElementById("toast-icon");
+      const text = document.getElementById("toast-msg");
+
+      const icons = { success: "fa-check-circle", error: "fa-xmark-circle", warning: "fa-triangle-exclamation", info: "fa-info-circle" };
+      const colors = { success: "text-emerald-400", error: "text-rose-400", warning: "text-amber-400", info: "text-indigo-400" };
+
+      icon.className = `fas ${icons[type] || icons.info} ${colors[type] || colors.info}`;
+      text.textContent = msg;
+
+      el.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove("show"), 3500);
+    }
+
+    // ── Util ───────────────────────────────────────────────────────
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+  </script>
+</body>
+</html>
